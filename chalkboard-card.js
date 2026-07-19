@@ -34,6 +34,8 @@
       this._drawing = false;
       this._lastPoint = null;
       this._saveTimer = null;
+      this._undoSnapshot = null;
+      this._canUndo = false;
     }
 
     setConfig(config) {
@@ -64,11 +66,20 @@
           ha-card { overflow: hidden; }
           .wrap {
             position: relative;
+            box-sizing: border-box;
             width: 100%;
             height: ${this._config.height || "360px"};
             overflow: hidden;
             touch-action: none;
             background: #14251b;
+            border: 7px solid;
+            border-image: repeating-linear-gradient(
+              95deg,
+              #dfc59a 0px, #d2a978 5px,
+              #e8d3a8 5px, #e8d3a8 10px,
+              #cfa672 10px, #cfa672 12px
+            ) 7;
+            border-radius: 3px;
           }
           canvas {
             position: absolute;
@@ -103,7 +114,7 @@
             <canvas></canvas>
             <div class="toolbar">
               ${CHALK_COLORS.map((c, i) => `<button class="swatch${i === 0 ? " active" : ""}" data-color="${c}" style="background:${c}"></button>`).join("")}
-              <button class="btn reset-view">⤢ Reset view</button>
+              <button class="btn undo">⤢ Reset view</button>
               <button class="btn erase">🧹 Erase</button>
             </div>
           </div>
@@ -118,7 +129,7 @@
       this._ctx = canvas.getContext("2d");
 
       const dpr = window.devicePixelRatio || 1;
-      const rect = wrap.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
       canvas.width = Math.max(1, Math.round(rect.width * dpr));
       canvas.height = Math.max(1, Math.round(rect.height * dpr));
 
@@ -138,7 +149,36 @@
         });
       });
       this.shadowRoot.querySelector(".erase").addEventListener("click", () => this._erase());
-      this.shadowRoot.querySelector(".reset-view").addEventListener("click", () => this._resetView());
+      this.shadowRoot.querySelector(".undo").addEventListener("click", () => this._undoOrReset());
+      this._refreshUndoButton();
+    }
+
+    // Single button, two jobs: undo the last stroke/erase if one is pending,
+    // otherwise fall back to resetting pan/zoom. Only one level of undo is
+    // kept (matches the "casual notes, not precious artwork" design - this
+    // isn't meant to become a full history stack).
+    _refreshUndoButton() {
+      const btn = this.shadowRoot.querySelector(".undo");
+      if (!btn) return;
+      btn.textContent = this._canUndo ? "↩ Undo" : "⤢ Reset view";
+    }
+
+    _snapshotForUndo() {
+      this._undoSnapshot = this._ctx.getImageData(0, 0, this._canvas.width, this._canvas.height);
+      this._canUndo = true;
+      this._refreshUndoButton();
+    }
+
+    _undoOrReset() {
+      if (this._canUndo && this._undoSnapshot) {
+        this._ctx.putImageData(this._undoSnapshot, 0, 0);
+        this._canUndo = false;
+        this._undoSnapshot = null;
+        this._refreshUndoButton();
+        this._scheduleSave();
+      } else {
+        this._resetView();
+      }
     }
 
     // Procedural chalkboard texture (slate gradient + speckle), cached once
@@ -224,6 +264,7 @@
       } else if (this._pointers.size === 1) {
         this._drawing = true;
         this._lastPoint = this._canvasPoint(e);
+        this._snapshotForUndo();
       }
     }
 
@@ -303,6 +344,7 @@
     // reset - matches a real chalkboard eraser, which never fully cleans in
     // one pass either.
     _erase() {
+      this._snapshotForUndo();
       const ctx = this._ctx;
       ctx.globalAlpha = ERASE_ALPHA;
       ctx.drawImage(this._texture, 0, 0);
