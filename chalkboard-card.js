@@ -15,7 +15,29 @@
 (function () {
   "use strict";
 
-  const CHALK_COLORS = ["#f5f5f0", "#f4e04d", "#f28fb0"]; // white, yellow, pink
+  // Muted/pastel tones so they read as real chalk dust on the green slate,
+  // not saturated screen colours.
+  const CHALK_COLORS = [
+    "#f5f5f0", // white
+    "#f4e04d", // yellow
+    "#f28fb0", // pink
+    "#ec5f5f", // red
+    "#bd93d8", // purple
+    "#7db4e0", // blue
+    "#efa35c", // orange
+  ];
+  // Old-school chalkboard eraser: felt pad under a wooden block, with a
+  // little chalk dust on the felt. Inline SVG so it stays dependency-free.
+  const ERASER_ICON =
+    '<svg class="eraser-icon" viewBox="0 0 24 16" aria-hidden="true">' +
+    '<rect x="1.5" y="8" width="21" height="6.5" rx="1.2" fill="#40454f"/>' +
+    '<rect x="1.5" y="12.5" width="21" height="2" rx="1" fill="#2c3038"/>' +
+    '<rect x="3.5" y="2.5" width="17" height="6" rx="1.6" fill="#c98a4b"/>' +
+    '<rect x="3.5" y="2.5" width="17" height="2.2" rx="1.4" fill="#dda76a"/>' +
+    '<circle cx="6" cy="13.2" r="0.7" fill="#f5f5f0" opacity="0.8"/>' +
+    '<circle cx="12" cy="13.6" r="0.6" fill="#f5f5f0" opacity="0.7"/>' +
+    '<circle cx="17.5" cy="13.1" r="0.7" fill="#f5f5f0" opacity="0.75"/>' +
+    '</svg>';
   const MAX_ZOOM = 3;
   const MIN_ZOOM = 1;
   const SAVE_DEBOUNCE_MS = 800;
@@ -108,6 +130,11 @@
             font-size: 13px;
             padding: 4px 10px;
           }
+          .eraser-icon {
+            width: 18px; height: 12px;
+            vertical-align: -2px;
+            margin-right: 2px;
+          }
         </style>
         <ha-card>
           <div class="wrap">
@@ -115,7 +142,7 @@
             <div class="toolbar">
               ${CHALK_COLORS.map((c, i) => `<button class="swatch${i === 0 ? " active" : ""}" data-color="${c}" style="background:${c}"></button>`).join("")}
               <button class="btn undo">⤢ Reset view</button>
-              <button class="btn erase">🧹 Erase</button>
+              <button class="btn erase">${ERASER_ICON} Erase</button>
             </div>
           </div>
         </ha-card>
