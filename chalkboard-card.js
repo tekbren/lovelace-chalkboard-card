@@ -264,12 +264,14 @@
     }
 
     _canvasPoint(e) {
+      // getBoundingClientRect() already reflects the CSS pan/zoom transform:
+      // pan is baked into rect.left/top and zoom scales rect.width/height. So
+      // mapping the pointer through the rect alone handles both. Applying
+      // _panX/_panY and _zoom a second time here (as this used to) double-counts
+      // the transform and misplaces strokes once the board is zoomed in.
       const rect = this._canvas.getBoundingClientRect();
-      // Undo the CSS pan/zoom transform to get the real drawing-surface point.
-      const cssX = e.clientX - rect.left;
-      const cssY = e.clientY - rect.top;
-      const x = ((cssX - this._panX) / this._zoom) * (this._canvas.width / rect.width);
-      const y = ((cssY - this._panY) / this._zoom) * (this._canvas.height / rect.height);
+      const x = ((e.clientX - rect.left) / rect.width) * this._canvas.width;
+      const y = ((e.clientY - rect.top) / rect.height) * this._canvas.height;
       return { x, y };
     }
 
