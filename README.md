@@ -10,6 +10,8 @@ grainy chalk-style strokes, and an eraser that smudges instead of resetting
 to pristine, the same way a real chalkboard eraser never fully cleans in
 one pass.
 
+![Chalkboard card on a Home Assistant kiosk dashboard, showing coloured chalk notes, the chalk-colour swatches and the dust-board eraser](screenshot.png)
+
 This is built for casual notes, not permanent artwork. There is
 deliberately no save/export/undo/history — it's meant to be written over,
 not preserved. It quietly persists to this browser's own `localStorage` so
